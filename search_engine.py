@@ -19,8 +19,6 @@ class SearchEngine:
         
         # 평균 길이를 구해줌
         self.inverted_index.finalize()
-        
-        print(f"인덱싱 완료. 문서 수: {self.inverted_index.doc_count}")
 
     def search(self, query: str, top_k: int = 10) -> List[str]:
         # 검색 함수
