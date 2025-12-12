@@ -1,63 +1,34 @@
-import ir_datasets
-from typing import List, Tuple, Dict
+from src.index.inverted_index import InvertedIndex
+from typing import List, Tuple
 import os
-import pickle
 
+# 서치 엔진은 실제로 application 계층에서 사용됨
+# 서치 엔진의 책임 == 시스템의 책임
+# 일종의 controller 역할을 함
+# inverted index를 사용하여 검색어를 찾음
 class SearchEngine:
-    def __init__(self, dataset_id: str = "wikir/en1k/training"):
-        """
-        검색 엔진 객체 초기화
-        """
-        self.dataset_id = dataset_id
+    def __init__(self, index_path: str = "data/index.pkl"):
+        # index_path: inverted index를 저장할 파일의 경로
+        self.index_path = index_path
+        self.inverted_index = InvertedIndex()
         
-        # 데이터셋 로드
-        self.dataset = ir_datasets.load(dataset_id)
+    def build_index_from_data(self, documents: List[Tuple[str, str]]):
+        # inverted index를 생성하는 함수
+        for doc_id, text in documents:
+            self.inverted_index.add_document(doc_id, text)
         
-        # 역색인 (inveted Index)
-        self.index: Dict[str, List[Tuple[str, int]]] = {}
+        # 평균 길이를 구해줌
+        self.inverted_index.finalize()
         
-        # 문서 길이 정보
-        self.doc_len: Dict[str, int] = {}
-        
-        # 문서 빈도
-        self.df: Dict[str, int] = {}
-        
-        # 전체 통계 정보
-        self.doc_count = 0 # 전체 문서 수
-        self.avg_doc_len = 0.0 # 평균 문서 길이
+        print(f"인덱싱 완료. 문서 수: {self.inverted_index.doc_count}")
 
-    def build_index(self):
-        """
-        문서를 읽으며 InvertedIndex를 구축
-        """
-        print(f"{self.dataset_id}에 대한 인덱스를 구축합니다.")        
-        # TODO: 토큰화 및 카운팅 구현 필요
-        pass
+    def search(self, query: str, top_k: int = 10) -> List[str]:
+        # 검색 함수
+        # results = inverted index에서 검색어를 찾은 문서 ID의 집합
+        return []
 
-    def search(self, query: str, top_k: int = 10) -> List[Tuple[str, float]]:
-        """
-        입력된 쿼리에 대해 BM25 점수를 계산하고, 상위 k개 문서를 반환하는 함수.
-        실제 프론트에서 이 함수를 호출해서 결과를 보여주는 것!!!
-        """
-        print(f"{query}에 대해서 검색하였습니다.")
-        # TODO: 계산하는 로직 구현이 필요
-        return [("dummy1", 1.5), ("dummy2", 0.9)]
+    def save(self):
+        self.inverted_index.save(self.index_path)
 
-    def save_index(self, path: str):
-        """
-        메모리에 있는 인덱스 데이터를 파일로 저장
-        """
-        print(f"인덱스를 다음 경로({path})에 저장합니다.")
-        # TODO: 데이터 저장
-        pass
-
-    def load_index(self, path: str) -> bool:
-        """
-        파일에서 인덱스 데이터를 불러와 메모리에 적재
-        """
-        if not os.path.exists(path):
-            return False
-            
-        print(f"인덱스를 다음 경로({path})에서 로드합니다.")
-        # TODO: 데이터 복원
-        return True
+    def load(self) -> bool:
+        return self.inverted_index.load(self.index_path)

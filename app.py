@@ -13,7 +13,7 @@ engine: SearchEngine = None
 async def lifespan(app: FastAPI):
     # 초기화
     global engine
-    engine = SearchEngine()
+    engine = SearchEngine() # 추후 확장성을 고려해서 config로 의존성 주입해주면 좋을듯
 
     # 인덱스 로딩 딱 한 번
     
