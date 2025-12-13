@@ -22,12 +22,23 @@ def main():
     # 검색 테스트
     sample_term = "university"
     
-    if sample_term in index.index:
-        postings = index.index[sample_term]
-        print(f"검증: '{sample_term}' 단어가 {len(postings)}개의 문서에서 발견되었습니다.")
+    # 검색어도 인덱싱과 동일한 전처리를 거쳐야 함
+    processed_tokens = index.tokenizer.tokenize(sample_term)
+    
+    if not processed_tokens:
+        print(f"경고: '{sample_term}'은(는) 불용어이거나 유효하지 않은 단어입니다.")
+        return
+
+    target_term = processed_tokens[0]
+    print(f"검색어 변환: '{sample_term}' -> '{target_term}'")
+
+    if target_term in index.index:
+        postings = index.index[target_term]
+        print(f"'{target_term}' 단어가 {len(postings)}개의 문서에서 발견되었습니다.")
         
         # 첫 번째 문서의 위치 정보 출력 예시
         first_doc = list(postings.keys())[0]
+
         print(f"문서 {first_doc} -> 위치 정보 {postings[first_doc]}")
     else:
         print(f"경고: '{sample_term}' 단어를 찾을 수 없습니다.")
