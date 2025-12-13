@@ -2,7 +2,7 @@ import pickle
 import os
 from collections import defaultdict
 from typing import List, Dict, Set
-from src.utils.tokenizer import Tokenizer
+from .tokenizer import Tokenizer
 
 # InvertedIndex 객체의 책임
 # 1. 데이터를 저장
@@ -56,9 +56,6 @@ class InvertedIndex:
                 "avg_doc_len": self.avg_doc_len
             }
             pickle.dump(data, f)
-            
-        # 디버깅을 위한 메시지
-        print(f"인덱스 저장 완료: {path} (Size: {len(self.index)} terms)")
 
     def load(self, path: str) -> bool:
         if not os.path.exists(path):
@@ -75,6 +72,5 @@ class InvertedIndex:
             self.doc_lengths = data["doc_lengths"]
             self.doc_count = data["doc_count"]
             self.avg_doc_len = data["avg_doc_len"]
-            
-        print(f"인덱스 로드 완료: {path} (Docs: {self.doc_count})")
+
         return True

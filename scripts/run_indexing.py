@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import ir_datasets
-from search_engine import SearchEngine
+from src.core.search_engine import SearchEngine
 import time
 
 def main():

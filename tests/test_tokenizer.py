@@ -1,5 +1,5 @@
 import pytest
-from src.utils.tokenizer import Tokenizer
+from src.core.tokenizer import Tokenizer
 
 class TestTokenizer:
     @pytest.fixture

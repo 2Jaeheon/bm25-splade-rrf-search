@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hybrid Search Engine</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header class="search-header">
+            <h1 class="logo">Search</h1>
+            <p class="subtitle">BM25 + SPLADE + Cross-Encoder Hybrid Retrieval</p>
+        </header>
+
+        <!-- Search Form -->
+        <div class="search-box">
+            <form action="/search" method="get">
+                <div class="input-wrapper">
+                    <input type="text" name="q" placeholder="검색어를 입력하세요" value="{{ query | default('') }}"
+                        autocomplete="off" autofocus>
+                    <button type="submit">Search</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Search Results -->
+        {% if results %}
+        <div class="results-meta">
+            Found {{ results|length }} results in {{ search_time }} seconds
+        </div>
+
+        <div class="dataset-notice">
+            <span>데이터셋에 원본 제목이 포함되어 있지 않아, 본문 내용을 바탕으로 자동 생성된 제목입니다.<br>
+                따라서 문서의 제목과 본문 내용이 일치하지 않을 수 있습니다.
+            </span>
+        </div>
+
+        <div class="results-container">
+            {% for result in results %}
+            <div class="result-card">
+                <div class="result-header">
+                    <span class="rank-badge">#{{ result.rank }}</span>
+                    <h3 class="doc-title"><a href="#" style="text-decoration: none; color: inherit;">{{ result.title
+                            }}</a></h3>
+                    <span class="doc-id-badge">{{ result.doc_id }}</span>
+                </div>
+                <div class="result-body">
+                    <p>{{ result.snippet | safe }}</p>
+                </div>
+                <div class="result-footer">
+                    <span class="score-tag">Score: {{ result.score }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% elif query %}
+        <div class="no-results">
+            <p>No documents found for "<strong>{{ query }}</strong>"</p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+
+</html>

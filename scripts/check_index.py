@@ -1,7 +1,7 @@
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from src.index.inverted_index import InvertedIndex
+from src.core.inverted_index import InvertedIndex
 
 def main():
     print("=== 인덱스 파일 검증 시작 ===")

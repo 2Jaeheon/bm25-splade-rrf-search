@@ -1,6 +1,6 @@
 import pytest
 import os
-from src.index.inverted_index import InvertedIndex
+from src.core.inverted_index import InvertedIndex
 
 class TestInvertedIndex:
     @pytest.fixture
