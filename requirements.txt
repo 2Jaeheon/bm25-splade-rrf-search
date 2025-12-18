@@ -41,3 +41,5 @@ pytrec_eval
 nltk
 sentence-transformers
 pytest
+sentencepiece
+protobuf

@@ -1,9 +1,10 @@
 import sys
 import os
+import json
+import time
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import ir_datasets
 from src.core.search_engine import SearchEngine
-import time
 
 def main():
     print("=== 인덱싱 프로세스 시작 ===")
@@ -12,24 +13,33 @@ def main():
     # 서치 엔진 초기화
     engine = SearchEngine(index_path="data/index.pkl")
     
-    # 데이터 셋 로드
+    EXPANDED_DOCS_PATH = "data/expanded_docs.json"
     dataset_id = "wikir/en1k/training"
-    print(f"데이터셋 로드: {dataset_id}")
-    dataset = ir_datasets.load(dataset_id)
-    
-    # 문서 준비
     documents = []
-    for doc in dataset.docs_iter():
-        documents.append((doc.doc_id, doc.text))
-        if len(documents) % 10000 == 0:
-            print(f"{len(documents)}개의 문서를 읽었습니다.")
-            
-    print(f"총 {len(documents)}개의 문서를 읽었습니다.")
+
+    # 확장된 문서(JSON)가 있는지 먼저 확인
+    if os.path.exists(EXPANDED_DOCS_PATH):
+        with open(EXPANDED_DOCS_PATH, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        for item in data:
+            doc_id = item['doc_id']
+            text = item.get('text', item.get('original_text', ''))
+            documents.append((doc_id, text))
     
-    # 인덱스 구축
+    # Doc2Query에서 생성된 JSON문서가 없으면 원본 ir_datasets 사용
+    else:
+        print("원본 데이터셋 사용")
+        dataset = ir_datasets.load(dataqset_id)
+        
+        for doc in dataset.docs_iter():
+            documents.append((doc.doc_id, doc.text))
+            if len(documents) % 10000 == 0:
+                print(f"{len(documents)}개의 문서를 읽었습니다.")
+    
+    print("인덱스 구축 중...")
     engine.build_index_from_data(documents)
     
-    # 인덱스 저장
     engine.save()
     
     elapsed = time.time() - start_time
