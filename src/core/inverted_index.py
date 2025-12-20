@@ -2,7 +2,7 @@ import pickle
 import os
 from collections import defaultdict
 from typing import List, Dict, Set
-from .tokenizer import Tokenizer
+from .tokenizers import BM25Tokenizer
 
 # InvertedIndex 객체의 책임
 # 1. 데이터를 저장
@@ -23,7 +23,7 @@ class InvertedIndex:
         self.doc_lengths: Dict[str, int] = {}
         self.doc_count: int = 0
         self.avg_doc_len: float = 0.0
-        self.tokenizer = Tokenizer()
+        self.tokenizer = BM25Tokenizer()
 
     def add_document(self, doc_id: str, text: str):
         # 문서를 토큰화한 후, 인덱스에 추가

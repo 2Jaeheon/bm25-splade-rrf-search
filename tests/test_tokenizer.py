@@ -1,59 +1,67 @@
 import pytest
-from src.core.tokenizer import Tokenizer
+from src.core.tokenizers import BM25Tokenizer, SpladeTokenizer
 
-class TestTokenizer:
+class TestBM25Tokenizer:
     @pytest.fixture
     def tokenizer(self):
-        return Tokenizer(use_stopwords=True)
+        return BM25Tokenizer()
 
-    def test_basic_tokenization(self, tokenizer):
+    def test_basic_tokenization_and_stemming(self, tokenizer):
         # Given
-        text = "Hello, World!"
-
+        text = "The quick brown foxes are running"
+        
         # When
         tokens = tokenizer.tokenize(text)
+        
+        # Then
+        assert "fox" in tokens
+        assert "run" in tokens
+        assert "the" not in tokens
+        assert "are" not in tokens
+        assert "quick" in tokens
+        assert "brown" in tokens
 
+    def test_special_characters(self, tokenizer):
+        # Given
+        text = "Hello!! World..."
+        
+        # When
+        tokens = tokenizer.tokenize(text)
+        
         # Then
         assert "hello" in tokens
         assert "world" in tokens
-        assert "," in tokens
-        assert "!" in tokens
-
-    def test_preserves_stopwords(self, tokenizer):
-        # Given
-        text = "This is a book about the python"
-        
-        # When
-        tokens = tokenizer.tokenize(text)
-        
-        # Then
-        assert "is" in tokens
-        assert "the" in tokens
-        assert "book" in tokens
-        assert "python" in tokens
-
-    def test_subword_splitting(self, tokenizer):
-        # Given
-        text_running = "running runs"
-        text_compute = "computation computer"
-
-        # When
-        tokens_running = tokenizer.tokenize(text_running)
-        tokens_compute = tokenizer.tokenize(text_compute)
-
-        # Then
-        assert tokens_running == ["running", "runs"]
-        assert tokens_compute == ["computation", "computer"]
+        assert "!" not in tokens
+        assert "." not in tokens
 
     def test_empty_string(self, tokenizer):
+        assert tokenizer.tokenize("") == []
+        assert tokenizer.tokenize(None) == []
+
+
+class TestSpladeTokenizer:
+    @pytest.fixture
+    def tokenizer(self):
+        return SpladeTokenizer()
+
+    def test_tokenize_output_format(self, tokenizer):
         # Given
-        empty_text = ""
-        none_text = None
-
+        text = "Hello world"
+        
         # When
-        result_empty = tokenizer.tokenize(empty_text)
-        result_none = tokenizer.tokenize(none_text)
-
+        encoded = tokenizer.tokenize(text, return_tensors='pt')
+        
         # Then
-        assert result_empty == []
-        assert result_none == []
+        assert 'input_ids' in encoded
+        assert 'attention_mask' in encoded
+        assert encoded['input_ids'].shape[0] == 1 # Batch size 1
+
+    def test_batch_processing(self, tokenizer):
+        # Given
+        texts = ["Hello world", "Python programming"]
+        
+        # When
+        encoded = tokenizer.tokenize(texts, return_tensors='pt', padding=True)
+        
+        # Then
+        assert encoded['input_ids'].shape[0] == 2

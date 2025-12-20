@@ -18,9 +18,6 @@ DOC_STORE = {} # {doc_id: text}
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def generate_title(text: str) -> str:
-    """
-    NLTK를 사용하여 본문의 첫 번째 명사구(Noun Phrase)를 추출하여 제목으로 사용
-    """
     try:
         # 첫 문장만 추출 (간단하게 마침표 기준으로)
         first_sentence = text.split('.')[0]
@@ -40,7 +37,7 @@ def generate_title(text: str) -> str:
             if subtree.label() == 'NP':
                 # 찾은 명사구의 단어들을 합침
                 words = [word for word, tag in subtree.leaves()]
-                # 너무 짧으면(1글자) 다음 거 찾기 (예: "a")
+                
                 if len(words) == 1 and len(words[0]) <= 1:
                     continue
                 return " ".join(words).title()
@@ -105,6 +102,11 @@ async def lifespan(app: FastAPI):
         DOC_STORE[doc.doc_id] = doc.text
     print(f"문서 로드 완료: {len(DOC_STORE)}, {time.time() - start_time:.2f}초")
     
+    print("SPLADE 모델 로딩 중...")
+    engine.load_splade_model()
+    engine.hybrid_search("warm up!!", top_k=100)
+    print("모델 로딩 완료.")
+
     yield
 
     # 종료
@@ -135,7 +137,7 @@ async def search(request: Request, q: str = ""):
     
     if q and engine:
         start_time = time.time()
-        results_with_scores = engine.search(q, top_k=10)
+        results_with_scores = engine.hybrid_search(q, top_k=10)
         
         for rank, (doc_id, score) in enumerate(results_with_scores, 1):
             text = DOC_STORE.get(doc_id, "Content not found.")

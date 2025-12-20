@@ -9,12 +9,9 @@ from src.core.search_engine import SearchEngine
 
 def main():
     # 엔진 및 데이터셋 로드
-    engine = SearchEngine(index_path="data/index.pkl", splade_index_path="data/splade_index")
-    print("인덱스 로딩 중...")
+    engine = SearchEngine(index_path="data/index.pkl")
     if not engine.load():
-        print("인덱스 로드 실패")
         return
-        
     dataset_id = "wikir/en1k/training"
     dataset = ir_datasets.load(dataset_id)
     
@@ -32,14 +29,11 @@ def main():
     # 실제 평가 실행
     run = {}
     target_query_ids = set(qrels.keys())
-    
-    print(f"총 {len(target_query_ids)}개의 쿼리에 대해 평가를 진행합니다.")
-    
     for q_id, q_text in tqdm(queries.items(), desc="검색 중"):
         if q_id not in target_query_ids:
             continue
 
-        results = engine.hybrid_search(q_text, top_k=1000, candidates_k=1000)
+        results = engine.search_bm25(q_text, top_k=5000)
         
         run[q_id] = {}
         for doc_id, score in results:
@@ -48,13 +42,14 @@ def main():
     # 평가 지표
     evaluator = pytrec_eval.RelevanceEvaluator(
         qrels, 
-        {'map', 'ndcg', 'P_10', 'recall_100', 'recall_1000'}
+        {'map', 'ndcg', 'P_10', 'recall_100', 'recall_1000', 'recall_2000', 'recall_5000'}
     )
     metrics = evaluator.evaluate(run)
     
     aggregated = {
         'map': 0.0, 'ndcg': 0.0, 'P_10': 0.0, 
-        'recall_100': 0.0, 'recall_1000': 0.0
+        'recall_100': 0.0, 'recall_1000': 0.0, 
+        'recall_2000': 0.0, 'recall_5000': 0.0
     }
     
     # 점수 집계
@@ -75,6 +70,8 @@ def main():
     print(f"P@10:           {aggregated['P_10']:.4f}")
     print(f"Recall@100:     {aggregated['recall_100']:.4f}")
     print(f"Recall@1000:    {aggregated['recall_1000']:.4f}")
+    print(f"Recall@2000:    {aggregated['recall_2000']:.4f}")
+    print(f"Recall@5000:    {aggregated['recall_5000']:.4f}")
     print("="*30)
 
 if __name__ == "__main__":

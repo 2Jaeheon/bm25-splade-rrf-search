@@ -1,4 +1,5 @@
 from .inverted_index import InvertedIndex
+from .splade_index import SpladeIndex
 from typing import List, Tuple
 from collections import defaultdict
 import math
@@ -9,13 +10,22 @@ import os
 # 일종의 controller 역할을 함
 # inverted index를 사용하여 검색어를 찾음
 class SearchEngine:
-    def __init__(self, index_path: str = "data/index.pkl", k1: float = 1.5, b: float = 0.75):
-        # index_path: inverted index를 저장할 파일의 경로
+    def __init__(self, index_path: str = "data/index.pkl", splade_index_path: str = "data/splade_index", k1: float = 1.5, b: float = 0.75):
         self.index_path = index_path
+        self.splade_index_path = splade_index_path
+        
         self.k1 = k1 # BM25 파라미터
         self.b = b # BM25 파라미터
-        self.inverted_index = InvertedIndex()
         
+        self.inverted_index = InvertedIndex()
+        self.splade_index = SpladeIndex()
+        self.splade_model = None
+
+    def load_splade_model(self):
+        if self.splade_model is None:
+            from .splade_model import SpladeModel
+            self.splade_model = SpladeModel()
+
     def build_index_from_data(self, documents: List[Tuple[str, str]]):
         # inverted index를 생성하는 함수
         for doc_id, text in documents:
@@ -24,7 +34,7 @@ class SearchEngine:
         # 평균 길이를 구해줌
         self.inverted_index.finalize()
 
-    def search(self, query: str, top_k: int = 10) -> List[Tuple[str, float]]:
+    def search_bm25(self, query: str, top_k: int = 100) -> List[Tuple[str, float]]:
         # 전처리
         query_tokens = self.inverted_index.tokenizer.tokenize(query)
         
@@ -61,12 +71,43 @@ class SearchEngine:
                 scores[doc_id] += idf * (numerator / denominator)
         
         # 결과 정렬 및 반환
-        # 점수 내림차순 정렬 후 상위 top_k개 문서 (ID, Score) 튜플 반환
         sorted_docs = sorted(scores.items(), key=lambda item: item[1], reverse=True)
+        return sorted_docs[:top_k]
+
+    def search_splade(self, query: str, top_k: int = 100) -> List[Tuple[str, float]]:
+        self.load_splade_model()
+        
+        query_vec = self.splade_model.encode(query)
+        results = self.splade_index.search(query_vec)
+
+        sorted_docs = sorted(results.items(), key=lambda item: item[1], reverse=True)
+        return sorted_docs[:top_k]
+
+    def hybrid_search(self, query: str, top_k: int = 10, rrf_k: int = 60, candidates_k: int = 2000) -> List[Tuple[str, float]]:
+        # RRF Score = 1 / (k + rank)
+        bm25_results = self.search_bm25(query, top_k=candidates_k)
+        splade_results = self.search_splade(query, top_k=candidates_k)
+        
+        rrf_scores = defaultdict(float)
+        
+        # BM25 랭크 점수 반영
+        for rank, (doc_id, _) in enumerate(bm25_results):
+            rrf_scores[doc_id] += 1 / (rrf_k + rank + 1)           
+        # SPLADE 랭크 점수 반영
+        for rank, (doc_id, _) in enumerate(splade_results):
+            rrf_scores[doc_id] += 1 / (rrf_k + rank + 1)
+            
+        # 리랭킹
+        sorted_docs = sorted(rrf_scores.items(), key=lambda item: item[1], reverse=True)
         return sorted_docs[:top_k]
 
     def save(self):
         self.inverted_index.save(self.index_path)
+        
+        if self.splade_index.matrix is not None:
+            self.splade_index.save(self.splade_index_path)
 
     def load(self) -> bool:
-        return self.inverted_index.load(self.index_path)
+        bm25_loaded = self.inverted_index.load(self.index_path)
+        splade_loaded = self.splade_index.load(self.splade_index_path)
+        return bm25_loaded or splade_loaded
