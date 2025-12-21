@@ -11,7 +11,7 @@ import pickle
 # 일종의 controller 역할을 함
 # inverted index를 사용하여 검색어를 찾음
 class SearchEngine:
-    def __init__(self, index_path: str = "data/index.pkl", splade_index_path: str = "data/splade_index", titles_path: str = "data/titles.pkl", k1: float = 1.5, b: float = 0.75):
+    def __init__(self, index_path: str = "data/index.pkl", splade_index_path: str = "data/splade_index", titles_path: str = "data/titles.pkl", k1: float = 1.5, b: float = 0.9):
         self.index_path = index_path
         self.splade_index_path = splade_index_path
         self.titles_path = titles_path
