@@ -3,6 +3,22 @@
 고전 정보검색(BM25)과 신경망 sparse retrieval(SPLADE)을 결합한 하이브리드 검색엔진 프로젝트입니다.
 웹 UI(FastAPI)로 검색을 수행하고, `pytrec_eval` 기반 오프라인 평가 스크립트를 제공합니다.
 
+<p align="center">
+  <img src="search engien recording.gif" alt="검색엔진 데모" width="700"/>
+</p>
+
+## 0. 왜 이렇게 만들었는가?
+
+### 배경
+- **BM25만 사용할 때**: 정확한 단어 매칭에 강하지만, 동의어·패러프레이즈(예: "car" vs "automobile")를 놓치기 쉽다.
+- **신경망 검색(SPLADE)만 사용할 때**: 의미적 유사성을 잘 포착하지만, 특수 용어·숫자·정확한 키워드 매칭에서는 BM25보다 약할 수 있다.
+- **결론**: 두 접근법의 장점을 결합하면 검색 품질이 향상된다는 연구 결과(BM25 + SPLADE 하이브리드)에 따라 본 프로젝트를 설계했다.
+
+### 기술 선택 이유
+- **RRF(Reciprocal Rank Fusion)**: BM25와 SPLADE의 점수 스케일이 다르므로, 별도의 가중치 튜닝 없이 랭크 기반으로 안정적으로 융합할 수 있어 RRF를 선택했다.
+- **SPLADE**: Dense retrieval(임베딩 + 코사인 유사도) 대신 sparse retrieval을 쓰면 기존 역색인 인프라와 호환되고, 해석 가능한 토큰 가중치를 얻을 수 있다.
+- **Doc2Query(문서 확장)**: 짧거나 키워드만 있는 문서는 쿼리와 매칭되기 어려우므로, Doc2Query로 문서를 확장해 검색 가능성을 높였다.
+
 ## 1. 핵심 기능
 - **BM25 검색**: 역색인 기반 lexical matching
 - **SPLADE 검색**: BERT 기반 sparse vector matching
@@ -12,7 +28,7 @@
 
 ## 2. 프로젝트 구조
 ```text
-hybrid-search-engine/
+search-engine/
 ├── main.py                          # FastAPI 실행 진입점 (uvicorn)
 ├── requirements.txt
 ├── pytest.ini
@@ -46,7 +62,7 @@ hybrid-search-engine/
 
 ## 3. 환경 설정
 ```bash
-cd /Users/jaeheon/Desktop/Programming/검색엔진/hybrid-search-engine
+cd <프로젝트 루트>
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
